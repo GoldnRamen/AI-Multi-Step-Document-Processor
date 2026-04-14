@@ -1,3 +1,9 @@
+@import "tailwindcss";
+
+.prog-transition {
+  transition: width 0.5s ease;
+}
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;
