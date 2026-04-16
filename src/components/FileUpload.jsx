@@ -27,16 +27,20 @@ export default function FileUpload(){
     }
 
     const clearFileInput = ()=>{
-        inputRef.current.value = ""
+        if (inputRef.current){
+            inputRef.current.value == ""
+        }
         setSelectedFile(null)
         setProgress(0)
         setUploadStatus("select")
+        setShowFileUpload(false)
 
     }
 
     const handleUpload = ()=>{        
         if (selectedFile != null){                                                
             fileList.push({
+                id:crypto.randomUUID(),
                 name: selectedFile.name,
                 size: selectedFile.size,
                 status: "completed"
@@ -86,10 +90,10 @@ export default function FileUpload(){
                     </div>               
                 )}                
                 <div className="border-t border-t-lime-600 bg-lime-100 mt-10 w-160 fixed top-64 overflow-y-auto ">
-                    <div className="flex flex-col h-[45vh] overflow-y-auto mt-3">
+                    <div className="flex flex-col h-[40vh] overflow-y-auto mt-3">
                         {fileList && fileList.length > 0 ? (                    
-                            fileList.map((someFile)=>(
-                                <div key={someFile.name} className="flex justify-between border rounded-lg px-1 py-2 my-1 mx-auto w-120">
+                            [...fileList].reverse().map((someFile)=>(
+                                <div key={someFile.id} className="flex justify-between border rounded-lg px-1 py-2 my-1 mx-auto w-120">
                                     <div className="flex w-full justify-between">
                                         <div className="flex gap-2 items-center align-middle">
                                             <File width={'30px'} height={'30px'} className="text-lime-800 hover:bg-indigo-200 rounded-full p-1 cursor-pointer" />      
@@ -98,7 +102,7 @@ export default function FileUpload(){
                                         <div className="flex gap-2 items-center align-middle">
                                             <p className="text-xs text-start">{(someFile.size / (1024 * 1024)).toFixed(2)}MB</p>                                                
                                             <CheckCircle width={'20px'} height={'20px'} className="text-green-800" />
-                                            <button onClick={clearFileInput}><XIcon className="text-indigo-800 hover:bg-indigo-200 rounded-full p-1 cursor-pointer" width={'30px'} height={'30px'} /></button>
+                                            <button><XIcon className="text-indigo-800 hover:bg-indigo-200 rounded-full p-1 cursor-pointer" width={'30px'} height={'30px'} /></button>
                                         </div>
                                     </div>
                                 </div>
