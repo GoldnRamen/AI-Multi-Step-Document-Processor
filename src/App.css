@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwind-scrollbar";
 
 .prog-transition {
   transition: width 0.5s ease;

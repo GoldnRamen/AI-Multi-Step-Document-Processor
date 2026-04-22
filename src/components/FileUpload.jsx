@@ -4,21 +4,29 @@ import { toast } from "sonner"
 
 export default function FileUpload(){
     const [selectedFile, setSelectedFile] = useState(null)
-    const [fileList, setFileList] = useState([])
+    const [fileList, setFileList] = useState(()=>{
+        const fileHistory = localStorage.getItem("fileData")
+        return fileHistory ? JSON.parse(fileHistory) : []
+    })
     const [progress, setProgress] = useState(0)
     const [uploadStatus, setUploadStatus] = useState(null)
-    const [showFileUpload, setShowFileUpload] = useState(true)
-    const inputRef = useRef(null)
+    const [showFileUpload, setShowFileUpload] = useState(true)    
+    const inputRef = useRef(null)    
+    const timeoutRef = useRef(null)    
+    const [isHovering, setIsHovering] = useState(null)
+    const currentFiles = JSON.parse(localStorage.getItem("fileData"))
 
     const handleFile = (event) =>{
         if (event.target.files && event.target.files.length > 0){
             setSelectedFile(event.target.files[0])            
         }        
-    }
+    }           
     useEffect(()=>{
         if (selectedFile != null) return(console.log("I'm no longer null"))
-        else if (selectedFile == null) return(console.log("I'm still null"))        
+        else if (selectedFile == null) return(console.log("I'm still null")) 
+        // currentFiles               
     },[selectedFile])
+
 
     const onChooseFile = ()=>{
         if (inputRef.current) {
@@ -39,13 +47,17 @@ export default function FileUpload(){
 
     const handleUpload = ()=>{        
         if (selectedFile != null){                                                
-            fileList.push({
+            const latestFile = {
                 id:crypto.randomUUID(),
                 name: selectedFile.name,
                 size: selectedFile.size,
                 status: "completed"
-            })                            
-            console.log(fileList)                                                
+            }    
+            const updatedList = [latestFile, ...fileList]
+            localStorage.setItem("fileData", JSON.stringify(updatedList))       
+            setFileList(updatedList)
+            console.log(updatedList)                                                
+            console.log("LocalData :", updatedList)            
             toast.success("File Upload was successfull") 
             setShowFileUpload(false)
         }
@@ -53,6 +65,26 @@ export default function FileUpload(){
             toast.error("Pls try upload again")
         }
         setSelectedFile(null)
+    }
+
+    const handleDelete = (someFileId) => {
+        const fileArray = JSON.parse(localStorage.getItem("fileData"))
+        if (fileArray) {
+            const updatedArray = fileArray.filter(file => file.id !== someFileId)
+            localStorage.removeItem("fileData")
+            localStorage.setItem("fileData", JSON.stringify(updatedArray))
+            setFileList(updatedArray)
+        }
+    }
+
+    const handleMouseEnter = ()=>{
+        if (timeoutRef.current) clearTimeout(timeoutRef.current)
+            setIsHovering(true)
+    }
+    const handleMouseLeave = ()=>{
+        timeoutRef.current = setTimeout(()=>{
+            setIsHovering(false)
+        }, 300)
     }
     return(
         <>
@@ -73,12 +105,12 @@ export default function FileUpload(){
                 {selectedFile && (
                     <div>
                         {showFileUpload && (
-                            <div className="flex-col w-76 h-fit bg-white mt-5 items-center">                    
+                            <div className="flex-col w-fit h-fit bg-white mt-5 items-center">                    
                                 <div className="flex justify-between border rounded-t-lg px-1 py-2 gap-3.5">                  
                                     <File width={'30px'} height={'30px'} className="text-lime-800 hover:bg-indigo-200 rounded-full p-1 cursor-pointer" />      
                                     <div className="flex-1 w-full">
-                                        <p className="text-sm text-start">{selectedFile.name}</p>                        
-                                        <div className="w-full h-1 bg-indigo-50 rounded">
+                                        <p className="text-xs text-start ">{selectedFile.name}</p>                        
+                                        <div className="w-full h-1 bg-indigo-50 rounded mt-1">
                                             <div className="w-[40%] h-full bg-indigo-800 rounded prog-transition"></div>
                                         </div>
                                     </div>
@@ -88,26 +120,35 @@ export default function FileUpload(){
                             </div>
                         )}
                     </div>               
-                )}                
-                <div className="border-t border-t-lime-600 bg-lime-100 mt-10 w-160 fixed top-64 overflow-y-auto ">
-                    <div className="flex flex-col h-[40vh] overflow-y-auto mt-3">
+                )}
+                <div className="border-t border-t-lime-600 bg-lime-100 mt-10 w-160 fixed top-64">
+                    <div className="flex flex-col h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-green-900 scrollbar-track-transparent mt-3">
                         {fileList && fileList.length > 0 ? (                    
-                            [...fileList].reverse().map((someFile)=>(
-                                <div key={someFile.id} className="flex justify-between border rounded-lg px-1 py-2 my-1 mx-auto w-120">
+                            fileList.reverse().map((someFile)=>(
+                                <div key={someFile.id} className="flex justify-between border rounded-lg px-1 py-2 my-1 mx-auto w-120 relative">
                                     <div className="flex w-full justify-between">
                                         <div className="flex gap-2 items-center align-middle">
                                             <File width={'30px'} height={'30px'} className="text-lime-800 hover:bg-indigo-200 rounded-full p-1 cursor-pointer" />      
-                                            <p className="text-sm text-start">{someFile.name.length > 20 ? someFile.name.slice(0, 20) + "..." : someFile.name }</p>                                                
+                                            <div className="relative group" onMouseEnter={() => setIsHovering(someFile.id)} onMouseLeave={() => setIsHovering(null)}>
+                                                <p className="text-sm text-start">
+                                                    {someFile.name.length > 20 ? someFile.name.slice(0, 20) + "..." : someFile.name}
+                                                </p>                                                
+                                                {isHovering === someFile.id && (
+                                                    <p className="absolute z-10 p-1 text-xs bg-white border shadow-md rounded -bottom-8 left-0 whitespace-nowrap">
+                                                    {someFile.name}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="flex gap-2 items-center align-middle">
                                             <p className="text-xs text-start">{(someFile.size / (1024 * 1024)).toFixed(2)}MB</p>                                                
                                             <CheckCircle width={'20px'} height={'20px'} className="text-green-800" />
-                                            <button><XIcon className="text-indigo-800 hover:bg-indigo-200 rounded-full p-1 cursor-pointer" width={'30px'} height={'30px'} /></button>
+                                            <button onClick={()=>handleDelete(someFile.id)}><XIcon className="text-indigo-800 hover:bg-indigo-200 rounded-full p-1 cursor-pointer" width={'30px'} height={'30px'} /></button>
                                         </div>
                                     </div>
                                 </div>
                             ))               
-                        ) : <>Not available</>}
+                        ) : <>Uploads Appear Here</>}
                     </div>
                 </div>
                 
