@@ -1,0 +1,11 @@
+The following file types can be read and extracted for perusal by js:
+
+Plain Text (.txt, .csv, .md): Easiest; requires no special libraries.
+
+PDF (.pdf): Requires a parser (like pdf.js) because PDFs store data as coordinates, not a simple stream of text.
+
+Microsoft Word (.docx): These are actually zipped XML files. You need a library like mammoth.js to convert the XML structure into text/HTML.
+
+Images (.jpg, .png): Requires OCR (Optical Character Recognition) such as Tesseract.js.
+
+Legacy Word (.doc): Very difficult to do in a browser; usually requires a backend server.

@@ -14,19 +14,32 @@ export default function FileUpload(){
     const inputRef = useRef(null)    
     const timeoutRef = useRef(null)    
     const [isHovering, setIsHovering] = useState(null)
-    const currentFiles = JSON.parse(localStorage.getItem("fileData"))
+    const [currentExtracted, setCurrentExtracted] = useState(()=>{
+        const fileExtracted = localStorage.getItem("currentFile")
+        if(fileExtracted){
+            const parsedFile = JSON.parse(fileExtracted)
+            return parsedFile?.contentForExtraction || ""
+        }
+        return ""
+
+    })
+    
 
     const handleFile = (event) =>{
         if (event.target.files && event.target.files.length > 0){
-            setSelectedFile(event.target.files[0])            
+            setSelectedFile(event.target.files[0])                        
         }        
-    }           
-    useEffect(()=>{
-        if (selectedFile != null) return(console.log("I'm no longer null"))
-        else if (selectedFile == null) return(console.log("I'm still null")) 
-        // currentFiles               
-    },[selectedFile])
+    }  
+    
+    // console.log("From localSTorage,: ", currentFile)
 
+    useEffect(()=>{
+        if (selectedFile != null) {
+            console.log("I'm no longer null, I am the selected File: ", selectedFile)
+        }
+
+        else if (selectedFile == null) return(console.log("I'm still null"))                       
+    },[selectedFile])    
 
     const onChooseFile = ()=>{
         if (inputRef.current) {
@@ -45,16 +58,20 @@ export default function FileUpload(){
 
     }
 
-    const handleUpload = ()=>{        
-        if (selectedFile != null){                                                
+    const handleUpload = async()=>{    
+        // I used an async await here            
+        if (selectedFile != null){         
+            const text = await selectedFile.text()                                       
             const latestFile = {
                 id:crypto.randomUUID(),
                 name: selectedFile.name,
                 size: selectedFile.size,
-                status: "completed"
+                status: "completed",
+                contentForExtraction: text
             }    
             const updatedList = [latestFile, ...fileList]
             localStorage.setItem("fileData", JSON.stringify(updatedList))       
+            localStorage.setItem("currentFile", JSON.stringify(latestFile))               
             setFileList(updatedList)
             console.log(updatedList)                                                
             console.log("LocalData :", updatedList)            
@@ -85,6 +102,16 @@ export default function FileUpload(){
         timeoutRef.current = setTimeout(()=>{
             setIsHovering(false)
         }, 300)
+    }
+
+    const handleFileExtraction = (currentExtracted)=>{
+        const reader = new FileReader()
+        reader.onload = (e) =>{
+            const text = e.target.result
+            console.log('Extracted content: ', text)            
+        }        
+        console.log('Type of file:', currentExtracted instanceof Blob) 
+        reader.readAsText(currentExtracted)
     }
     return(
         <>
@@ -151,6 +178,8 @@ export default function FileUpload(){
                         ) : <>Uploads Appear Here</>}
                     </div>
                 </div>
+
+                <div className="border p-2 " onClick={handleFileExtraction}>Extract latest file</div>
                 
             </div>
         </div>
